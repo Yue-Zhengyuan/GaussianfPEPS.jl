@@ -16,7 +16,7 @@ n, x = state_to_nx(A)
 
 # ⟨a_i a_j⟩
 x2 = similar(x)
-op = -FO.f_min_f_min()
+op = FO.f_min_f_min()
 for idx in CartesianIndices(x)
     i, j = Tuple(idx)
     if i == j

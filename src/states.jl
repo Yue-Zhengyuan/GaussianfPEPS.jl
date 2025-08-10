@@ -16,7 +16,6 @@ for χ pairs of virtual fermions `(a1_i, a2_i)` (i = 1, ..., χ)
 ```
 """
 function virtual_state(T::Type{<:Number}, χ::Int)
-    unit = TensorKit.id(V)
     ff = FO.f_plus_f_plus(T)
     vac = vacuum_state(T, 2)
     # MES for one pair of (a1_i, a2_i) on the bond
