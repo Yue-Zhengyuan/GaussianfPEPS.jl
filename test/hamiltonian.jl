@@ -15,7 +15,7 @@ B = randn(ComplexF64, (N, N))
 B = B - transpose(B)
 v = randn(reduce(⊗, fill(fermion_space(), N)))
 
-ham = parent_Hamiltonian(A, B)
+ham = bilinear_Hamiltonian(A, B)
 v1 = ham * v
-v2 = parent_Hamiltonian_map(A, B, v)
+v2 = bilinear_Hamiltonian_map(A, B, v)
 @test v1 ≈ v2

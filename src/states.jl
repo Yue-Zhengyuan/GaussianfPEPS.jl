@@ -12,7 +12,7 @@ vacuum_state(n::Int) = vacuum_state(ComplexF64, n)
 Construct the maximally entangled state (MES) on virtual bonds
 for χ pairs of virtual fermions `(a1_i, a2_i)` (i = 1, ..., χ)
 ```
-    |ω⟩ = ∏_{i=1}^χ (1 + a1†_i a2†_i) |0⟩
+    |ω⟩ = ∏_{i=1}^χ 2⁻½ (1 + a1†_i a2†_i) |0⟩
 ```
 """
 function virtual_state(T::Type{<:Number}, χ::Int)
@@ -20,7 +20,7 @@ function virtual_state(T::Type{<:Number}, χ::Int)
     vac = vacuum_state(T, 2)
     # MES for one pair of (a1_i, a2_i) on the bond
     # the resulting fermion order is (a1_1, a2_1, ..., a1_χ, a2_χ)
-    ω = (unit ⊗ unit + ff) * vac
+    ω = (1 / sqrt(2)) * (unit ⊗ unit + ff) * vac
     if χ > 1
         ω = reduce(⊗, fill(ω, χ))
         # reorder fermions to (a1_1, ..., a1_χ, a2_1, ..., a2_χ)
@@ -32,16 +32,12 @@ end
 virtual_state(χ::Int) = virtual_state(ComplexF64, χ)
 
 """
-Construct the local tensor of the fiducial state
-`exp(a† A a† / 2)`, where A is an anti-symmetric matrix.
-
-Input fermion order in `a` should be
-(p_1, ..., p_{Np}, l_1, r_1, ..., l_χ, r_χ, d_1, u_1, ..., d_χ, u_χ)
+Construct the fully paired state `exp(a† A a† / 2)`, 
+where A is an anti-symmetric matrix.
 """
-function fiducial_state(T::Type{<:Number}, Np::Int, χ::Int, A::AbstractMatrix)
-    @assert -transpose(A) ≈ A
-    # total number of physical + virtual fermions
-    N = Np + 4 * χ
+function paired_state(T::Type{<:Number}, A::AbstractMatrix)
+    N = size(A, 1)
+    @assert A ≈ -transpose(A)
     ff = FO.f_plus_f_plus(T)
     ψ = vacuum_state(T, N)
     # apply exp(A_{ij} a†_i a†_j) (i < j)
@@ -54,8 +50,23 @@ function fiducial_state(T::Type{<:Number}, Np::Int, χ::Int, A::AbstractMatrix)
             ψ = ncon([op, ψ], [idx_op, idx_ψ])
         end
     end
-    # reorder virtual fermion to 
-    # (l_1, ..., l_χ, r_1, ..., r_χ, d_1, ..., d_χ, u_1, ..., u_χ)
+    return ψ
+end
+paired_state(A) = paired_state(ComplexF64, A)
+
+"""
+Construct the local tensor of the fiducial state
+`exp(a† A a† / 2)`, where A is an anti-symmetric matrix.
+
+Input fermion order in `a` should be
+(p_1, ..., p_{Np}, r_1, l_1, ..., r_χ, l_χ, d_1, u_1, ..., d_χ, u_χ)
+
+The output fermion order will be
+(p_1, ..., p_{Np}, r_1, ..., r_χ, l_1, ..., l_χ, d_1, ..., d_χ, u_1, ..., u_χ)
+"""
+function fiducial_state(T::Type{<:Number}, Np::Int, χ::Int, A::AbstractMatrix)
+    ψ = paired_state(T, A)
+    # reorder virtual fermions
     perm = vcat(1:2:2χ, 2:2:2χ)
     perm = Tuple(vcat(1:Np, perm .+ Np, perm .+ (Np + 2χ)))
     ψ = permute(ψ, (perm, ()))
@@ -69,23 +80,23 @@ end
 Get PEPS tensor by contracting virtual axes of ⟨ω|F⟩,
 where |ω⟩, |F⟩ are the virtual and the fiducial states.
 ```
-            -2
+            -2  -1
+            ↑ ↗
+    -5  --←-F-→- 1 -→-ω-←- -3
+            ↓
+            2
             ↓
             ω
             ↑
-            1  -1
-            ↑ ↗
-    -5  --←-F-→- 2 -→-ω-←- -3
-            ↓
             -4
 ```
 Input axis order
 ```
-        5  1                2
+        5  1                1
         ↑ ↗                 ↑
-    2-←-F-→-3   1-←-ω-→-2   ω
+    3-←-F-→-2   1-←-ω-→-2   ω
         ↓                   ↓
-        4                   1
+        4                   2
 ```
 """
 function get_peps(ω::AbstractTensor{T,S,N1}, F::AbstractTensor{T,S,N2}) where {T,S,N1,N2}
@@ -96,6 +107,6 @@ function get_peps(ω::AbstractTensor{T,S,N1}, F::AbstractTensor{T,S,N2}) where {
     fuser_v = isomorphism(fuse(fill(V, χ)...), reduce(⊗, fill(V, χ)))
     ω = (fuser_v ⊗ fuser_v) * ω
     F = (fuser_p ⊗ reduce(⊗, fill(fuser_v, 4))) * F
-    @tensor A[-1; -2 -3 -4 -5] := conj(ω[1 -2]) * conj(ω[2 -3]) * F[-1 -5 2 -4 1]
+    @tensor A[-1; -2 -3 -4 -5] := conj(ω[1 -3]) * conj(ω[2 -4]) * F[-1 1 -5 2 -2]
     return InfinitePEPS(A; unitcell=(1, 1))
 end

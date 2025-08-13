@@ -25,6 +25,6 @@ Emin = (-sum(E) + tr(A)) / 2
 @show Emin
 
 # Hamiltonian operator
-ham = parent_Hamiltonian(A, B)
+ham = bilinear_Hamiltonian(A, B)
 D, U = eigen(ham)
 @test minimum(real(D.data)) ≈ Emin

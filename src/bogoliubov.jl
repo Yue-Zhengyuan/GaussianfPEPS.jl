@@ -59,7 +59,7 @@ fermion bilinear Hamiltonian, construct the Hamiltonian operator
 ```
 where A is Hermitian, and B is anti-symmetric.
 """
-function parent_Hamiltonian(A::AbstractMatrix{T}, B::AbstractMatrix{T}) where {T<:Number}
+function bilinear_Hamiltonian(A::AbstractMatrix{T}, B::AbstractMatrix{T}) where {T<:Number}
     @assert A ≈ A' && B ≈ -transpose(B)
     @assert size(A) == size(B)
     N = size(A, 1)
@@ -71,13 +71,13 @@ function parent_Hamiltonian(A::AbstractMatrix{T}, B::AbstractMatrix{T}) where {T
     pp = FO.f_plus_f_plus(T)
     mm = FO.f_min_f_min(T)
     # i = j terms
-    for i in 1:N
+    @inbounds for i in 1:N
         op = A[i, i] * reduce(⊗, (s == i ? num : unit) for s in 1:N)
         H += op
     end
     # i ≠ j terms
-    for i in 1:(N - 1)
-        for j in (i + 1):N
+    @inbounds for i in 1:(N - 1)
+        @inbounds for j in (i + 1):N
             op = A[i, j] * pm - A[j, i] * mp + B[i, j] * pp - conj(B[i, j]) * mm
             if N > 2
                 # permute axes (1, 2) to (i, j)
@@ -96,15 +96,19 @@ end
 
 """
 Construct the fermion bilinear Hamiltonian with BdG matrix 
-`H = [A B; -B̄ -Ā]` as a linear map on input state `v`
+`H = [A B; -B̄ -Ā]` as a linear map on input state `v`, 
+which may have an additional auxiliary leg.
 """
-function parent_Hamiltonian_map(
+function bilinear_Hamiltonian_map(
     A::AbstractMatrix{T}, B::AbstractMatrix{T}, v::AbstractTensor
 ) where {T<:Number}
     @assert A ≈ A' && B ≈ -transpose(B)
     @assert size(A) == size(B)
     N = size(A, 1)
-    @assert numout(v) == N
+    # v may carry additional auxiliary 1-dimensional legs to 
+    # allow nonzero charges or odd fermion parity
+    Nv = numout(v)
+    @assert Nv >= N
     num = FO.f_num(T)
     pm = FO.f_plus_f_min(T)
     mp = FO.f_min_f_plus(T)
@@ -113,17 +117,17 @@ function parent_Hamiltonian_map(
     v2 = similar(v)
     v2.data .= 0.0
     # i = j terms
-    for i in 1:N
+    @inbounds for i in 1:N
         op = A[i, i] * num
-        idx_v = collect(-1:-1:-N)
+        idx_v = collect(-1:-1:-Nv)
         idx_v[i] = i
         v2 += ncon([op, v], [[-i, i], idx_v])
     end
     # i ≠ j terms
-    for i in 1:(N - 1)
-        for j in (i + 1):N
+    @inbounds for i in 1:(N - 1)
+        @inbounds for j in (i + 1):N
             op = A[i, j] * pm - A[j, i] * mp + B[i, j] * pp - conj(B[i, j]) * mm
-            idx_v = collect(-1:-1:-N)
+            idx_v = collect(-1:-1:-Nv)
             idx_v[i], idx_v[j] = i, j
             v2 += ncon([op, v], [[-i, -j, i, j], idx_v])
         end
