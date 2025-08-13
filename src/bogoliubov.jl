@@ -17,7 +17,7 @@ function parent_Hamiltonian_BdG(G::AbstractMatrix)
     # resulting fermion order is (f_1, f†_1, ..., f_N, f†_N)
     W = get_W2(N)
     H = W' * (-0.5im * G) * W
-    # put annhilation in front of creation operators
+    # put annihilation in front of creation operators
     # (f_1, ..., f_N, f†_1, ..., f†_N)
     perm = vcat(1:2:(2N), 2:2:(2N))
     return Hermitian(H[perm, perm])
