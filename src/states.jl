@@ -4,7 +4,7 @@ Create the vacuum state for `n` spinless fermions
 function vacuum_state(T::Type{<:Number}, n::Int)
     vac = zeros(T, V)
     vac.data[1] = 1.0
-    return reduce(⊗, fill(vac, n))
+    return (n > 1) ? reduce(⊗, fill(vac, n)) : vac
 end
 vacuum_state(n::Int) = vacuum_state(ComplexF64, n)
 
@@ -24,7 +24,7 @@ function virtual_state(T::Type{<:Number}, χ::Int)
     if χ > 1
         ω = reduce(⊗, fill(ω, χ))
         # reorder fermions to (a1_1, ..., a1_χ, a2_1, ..., a2_χ)
-        perm = Tuple(vcat(1:2:2χ, 2:2:2χ))
+        perm = Tuple(vcat(1:2:(2χ), 2:2:(2χ)))
         ω = permute(ω, (perm, ()))
     end
     return ω
@@ -67,13 +67,13 @@ The output fermion order will be
 function fiducial_state(T::Type{<:Number}, Np::Int, χ::Int, A::AbstractMatrix)
     ψ = paired_state(T, A)
     # reorder virtual fermions
-    perm = vcat(1:2:2χ, 2:2:2χ)
+    perm = vcat(1:2:(2χ), 2:2:(2χ))
     perm = Tuple(vcat(1:Np, perm .+ Np, perm .+ (Np + 2χ)))
     ψ = permute(ψ, (perm, ()))
     return ψ
 end
 function fiducial_state(Np::Int, χ::Int, A::AbstractMatrix)
-    fiducial_state(ComplexF64, Np, χ, A)
+    return fiducial_state(ComplexF64, Np, χ, A)
 end
 
 """
@@ -99,7 +99,7 @@ Input axis order
         4                   2
 ```
 """
-function get_peps(ω::AbstractTensor{T,S,N1}, F::AbstractTensor{T,S,N2}) where {T,S,N1,N2}
+function get_peps(ω::AbstractTensor{T, S, N1}, F::AbstractTensor{T, S, N2}) where {T, S, N1, N2}
     χ = div(N1, 2)
     Np = N2 - 4χ
     # merge physical and virtual axes
@@ -108,5 +108,5 @@ function get_peps(ω::AbstractTensor{T,S,N1}, F::AbstractTensor{T,S,N2}) where {
     ω = (fuser_v ⊗ fuser_v) * ω
     F = (fuser_p ⊗ reduce(⊗, fill(fuser_v, 4))) * F
     @tensor A[-1; -2 -3 -4 -5] := conj(ω[1 -3]) * conj(ω[2 -4]) * F[-1 1 -5 2 -2]
-    return InfinitePEPS(A; unitcell=(1, 1))
+    return InfinitePEPS(A; unitcell = (1, 1))
 end

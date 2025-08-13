@@ -59,7 +59,7 @@ fermion bilinear Hamiltonian, construct the Hamiltonian operator
 ```
 where A is Hermitian, and B is anti-symmetric.
 """
-function bilinear_Hamiltonian(A::AbstractMatrix{T}, B::AbstractMatrix{T}) where {T<:Number}
+function bilinear_Hamiltonian(A::AbstractMatrix{T}, B::AbstractMatrix{T}) where {T <: Number}
     @assert A ≈ A' && B ≈ -transpose(B)
     @assert size(A) == size(B)
     N = size(A, 1)
@@ -100,12 +100,12 @@ Construct the fermion bilinear Hamiltonian with BdG matrix
 which may have an additional auxiliary leg.
 """
 function bilinear_Hamiltonian_map(
-    A::AbstractMatrix{T}, B::AbstractMatrix{T}, v::AbstractTensor
-) where {T<:Number}
+        A::AbstractMatrix{T}, B::AbstractMatrix{T}, v::AbstractTensor
+    ) where {T <: Number}
     @assert A ≈ A' && B ≈ -transpose(B)
     @assert size(A) == size(B)
     N = size(A, 1)
-    # v may carry additional auxiliary 1-dimensional legs to 
+    # v may carry additional auxiliary 1-dimensional legs to
     # allow nonzero charges or odd fermion parity
     Nv = numout(v)
     @assert Nv >= N
@@ -119,7 +119,7 @@ function bilinear_Hamiltonian_map(
     # i = j terms
     @inbounds for i in 1:N
         op = A[i, i] * num
-        idx_v = collect(-1:-1:-Nv)
+        idx_v = collect(-1:-1:(-Nv))
         idx_v[i] = i
         v2 += ncon([op, v], [[-i, i], idx_v])
     end
@@ -127,7 +127,7 @@ function bilinear_Hamiltonian_map(
     @inbounds for i in 1:(N - 1)
         @inbounds for j in (i + 1):N
             op = A[i, j] * pm - A[j, i] * mp + B[i, j] * pp - conj(B[i, j]) * mm
-            idx_v = collect(-1:-1:-Nv)
+            idx_v = collect(-1:-1:(-Nv))
             idx_v[i], idx_v[j] = i, j
             v2 += ncon([op, v], [[-i, -j, i, j], idx_v])
         end
@@ -142,7 +142,7 @@ Bogoliubov transformation of a fermionic bilinear Hamiltonian `H`. Returns
 """
 function bogoliubov(H::Hermitian)
     N = size(H, 1)
-    E, W0 = eigen(H; sortby=(x -> -real(x)))
+    E, W0 = eigen(H; sortby = (x -> -real(x)))
     n = div(N, 2)
     # construct the transformation W
     Wpos = W0[:, 1:n]

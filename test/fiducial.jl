@@ -6,7 +6,7 @@ using GaussianfPEPS
 import TensorKitTensors.FermionOperators as FO
 
 Random.seed!(0)
-Np, χ = 2, 1
+Np, χ = 1, 2
 N = Np + 4χ
 A = randn(ComplexF64, (N, N))
 A = A - transpose(A)

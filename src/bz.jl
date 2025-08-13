@@ -7,18 +7,18 @@ with the shift δ=0 if `pbc==true` (periodic), and δ=1/2 if `pbc==false` (anti-
 """
 struct BrillouinZone{D}
     # number of sites in each dimension
-    Ns::NTuple{D,Int}
+    Ns::NTuple{D, Int}
     # boundary condition in each dimension (true: PBC; false: anti-PBC)
-    pbcs::NTuple{D,Bool}
+    pbcs::NTuple{D, Bool}
     # all momenta in 1st Brillouin zone
-    ks::Array{Vector{Float64},D}
+    ks::Array{Vector{Float64}, D}
 end
 
 """
 Create the 1st Brillouin zone, where `Ns` and `pbcs` specify 
 the number of sites and boundary condition along each dimension.
 """
-function BrillouinZone(Ns::NTuple{D,Int}, pbcs::NTuple{D,Bool}) where {D}
+function BrillouinZone(Ns::NTuple{D, Int}, pbcs::NTuple{D, Bool}) where {D}
     ranges = Vector{UnitRange{Int}}(undef, D)
     for (i, (N, pbc)) in enumerate(zip(Ns, pbcs))
         if pbc
@@ -48,7 +48,7 @@ function BrillouinZone(Ns::NTuple{D,Int}, pbcs::NTuple{D,Bool}) where {D}
     end
     return BrillouinZone{D}(Ns, pbcs, ks)
 end
-function BrillouinZone(Ns::NTuple{D,Int}, pbcs::Bool) where {D}
+function BrillouinZone(Ns::NTuple{D, Int}, pbcs::Bool) where {D}
     return BrillouinZone(Ns, ntuple(_ -> pbcs, D))
 end
 
