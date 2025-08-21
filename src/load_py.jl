@@ -15,7 +15,7 @@ In terms of Majorana fermions, each complex fermion is replaced by
 (c1, c2).
 """
 function load_orth(file::AbstractString)
-    data = h5open(file, "cw")
+    data = h5open(file, "r")
     U = data["transformer/T"][]
     return U
 end

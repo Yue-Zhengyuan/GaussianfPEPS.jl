@@ -9,8 +9,8 @@ Random.seed!(0)
 for N in (4, 5)
     A = randn(ComplexF64, (N, N))
     A = A - transpose(A)
-    ψ = paired_state(A);
-    normalize!(ψ);
+    ψ = paired_state(A)
+    normalize!(ψ)
     n, x = state_to_nx(A)
 
     # ⟨a_i a_j⟩
@@ -27,7 +27,7 @@ for N in (4, 5)
             ψ2 = ncon([op, ψ], [idx_op, idx_ψ])
             x2[idx] = (ψ' * ψ2).data[1]
         end
-    end;
+    end
     @test x2 ≈ x
 
     # ⟨a†_i a_j⟩
@@ -50,6 +50,6 @@ for N in (4, 5)
             ψ2 = ncon([op, ψ], [idx_op, idx_ψ])
             n2[idx] = (ψ' * ψ2).data[1]
         end
-    end;
+    end
     @test n2 ≈ n
 end

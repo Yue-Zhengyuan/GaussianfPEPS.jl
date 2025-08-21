@@ -22,8 +22,8 @@ function virtual_state(T::Type{<:Number}, χ::Int)
     # the resulting fermion order is (a1_1, a2_1, ..., a1_χ, a2_χ)
     ω = (1 / sqrt(2)) * (unit ⊗ unit + ff) * vac
     if χ > 1
-        ω = reduce(⊗, fill(ω, χ))
         # reorder fermions to (a1_1, ..., a1_χ, a2_1, ..., a2_χ)
+        ω = reduce(⊗, fill(ω, χ))
         perm = Tuple(vcat(1:2:(2χ), 2:2:(2χ)))
         ω = permute(ω, (perm, ()))
     end
