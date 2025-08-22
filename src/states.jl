@@ -110,3 +110,22 @@ function get_peps(ω::AbstractTensor{T, S, N1}, F::AbstractTensor{T, S, N2}) whe
     @tensor A[-1; -2 -3 -4 -5] := conj(ω[1 -3]) * conj(ω[2 -4]) * F[-1 1 -5 2 -2]
     return InfinitePEPS(A; unitcell = (1, 1))
 end
+
+"""
+Translate the correlation matrix `X` produced by Gaussian-fPEPS
+to Gaussian fPEPS in PEPSKit format.
+"""
+function translate(X::AbstractMatrix)
+    Np = 2
+    G = fiducial_cormat(X)
+    H = parent_Hamiltonian_BdG(G)
+    E, W = bogoliubov(H)
+    if !(det(W) ≈ 1.0)
+        error("det(W) = -1; fiducial state has odd parity.")
+    end
+    A, B = bogoliubov_blocks(W)
+    ω = virtual_state(χ)
+    F = fiducial_state(Np, χ, -inv(A) * B)
+    peps = get_peps(ω, F)
+    return peps
+end

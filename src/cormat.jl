@@ -14,13 +14,13 @@ end
 
 """
 Construct the fiducial state local correlation matrix
-`Γ = Uᵀ J U`, where `U` is a real orthogonal matrix, 
+`Γ = Xᵀ J X`, where `X` is a real orthogonal matrix, 
 and `J` is the direct sum of `[0 1; -1 0]` blocks.
 """
-function fiducial_cormat(U::AbstractMatrix)
-    @assert eltype(U) <: Real && U' * U ≈ I
-    J = get_J(div(size(U, 1), 2))
-    return transpose(U) * J * U
+function fiducial_cormat(X::AbstractMatrix)
+    @assert eltype(X) <: Real && X' * X ≈ I
+    J = get_J(div(size(X, 1), 2))
+    return transpose(X) * J * X
 end
 
 """
@@ -29,7 +29,7 @@ Get the blocks of (Np + 4*χ)-dimensional real correlation matrix
     G = [A B; -Bᵀ D]
 ```
 """
-function cormat_blocks(G::AbstractMatrix, Np::Int)
+function cormat_blocks(G::AbstractMatrix, Np::Int = 2)
     @assert eltype(G) <: Real && G ≈ -transpose(G)
     A = G[1:(2 * Np), 1:(2 * Np)]
     B = G[1:(2 * Np), (2 * Np + 1):end]

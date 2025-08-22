@@ -5,7 +5,7 @@ export fiducial_cormat, cormat_to_nx, state_to_nx
 export paired_state, virtual_state, fiducial_state, get_peps
 export parent_Hamiltonian_BdG, bogoliubov, bogoliubov_blocks
 export bilinear_Hamiltonian, bilinear_Hamiltonian_map
-export load_orth
+export load_orth, translate
 
 using LinearAlgebra
 using SparseArrays: sparse, blockdiag
