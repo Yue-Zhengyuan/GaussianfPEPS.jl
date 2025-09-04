@@ -7,16 +7,14 @@ export parent_Hamiltonian_BdG, bogoliubov, bogoliubov_blocks
 export bilinear_Hamiltonian, bilinear_Hamiltonian_map
 export translate
 
-export bcs_spinhalf, bcs_energy
+export BCS
 
 using LinearAlgebra
 using SparseArrays: sparse, blockdiag, spdiagm
 using HDF5
 using TensorKit
 using PEPSKit
-using PEPSKit: nearest_neighbours
 import TensorKitTensors.FermionOperators as FO
-import TensorKitTensors.HubbardOperators as HO
 
 const V = FO.fermion_space()
 const unit = TensorKit.id(V)
@@ -28,6 +26,7 @@ include("bz.jl")
 include("cormat.jl")
 include("states.jl")
 include("bogoliubov.jl")
+include("utils.jl")
 
 include("models/bcs.jl")
 

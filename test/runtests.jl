@@ -10,3 +10,9 @@ end
 @time @safetestset "Bogoliubov transformation" begin
     include("bogoliubov.jl")
 end
+@time @safetestset "BCS mean field Hamiltonian" begin
+    include("bcs.jl")
+end
+@time @safetestset "Translation to fPEPS" begin
+    include("translate.jl")
+end

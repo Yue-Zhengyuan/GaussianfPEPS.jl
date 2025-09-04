@@ -3,39 +3,9 @@ using Random
 using LinearAlgebra
 using TensorKit
 using GaussianfPEPS
+using GaussianfPEPS: cormat_blocks, cormat_virtual, generate_cormat
 
 Random.seed!(0)
-
-function rand_orth(n::Int; special::Bool = false)
-    M = randn(Float64, (n, n))
-    F = qr(M)
-    Q = Matrix(F.Q)
-    R = F.R
-    # absorb signs of diag(R) into Q
-    λ = diag(R) ./ abs.(diag(R))
-    Q .= Q .* λ'
-    if special
-        # ensure det(Q)=+1
-        if det(Q) < 0
-            Q[:, 1] .*= -1
-        end
-    end
-    return Q
-end
-
-function generate_cormat(Np::Int, χ::Int)
-    N = Np + 4χ
-    while true
-        X = rand_orth(2N)
-        G = fiducial_cormat(X)
-        H = parent_Hamiltonian_BdG(G)
-        E, W = bogoliubov(H)
-        if det(W) ≈ 1
-            return X, G, H, E, W
-        end
-    end
-    return
-end
 
 Np, χ = 2, 2
 X, G, H, E, W = generate_cormat(Np, χ)
@@ -47,11 +17,11 @@ Emax = (sum(E) + tr(A)) / 2
 
 # blocks of Bogoliubov transformation
 U, V = bogoliubov_blocks(W)
-@show (det(U), det(V))
+@info "Determinant of the Bogoliubov blocks U, V" det(U) det(V)
 # canonical constraint
-@assert W * W' ≈ I
-@assert U * transpose(V) ≈ -V * transpose(U)
-@assert U * U' + V * V' ≈ I
+@test W * W' ≈ I
+@test U * transpose(V) ≈ -V * transpose(U)
+@test U * U' + V * V' ≈ I
 
 # compare n_{ij} = ⟨a†_i a_j⟩ and x_{ij} = ⟨a_i a_j⟩
 n1, x1 = cormat_to_nx(G)
@@ -59,3 +29,20 @@ n2, x2 = state_to_nx(-inv(U) * V)
 
 @test n1 ≈ n2
 @test x1 ≈ x2
+
+# Fourier components of real correlation matrix
+# G(-k)ᵀ ≈ -G(k)
+
+A, B, D = cormat_blocks(G, Np)
+for _ in 1:10
+    k = rand(2) .- 0.5
+    Gω1, Gω2 = cormat_virtual(-k, χ), cormat_virtual(k, χ)
+    GF1 = A + B * inv(D + Gω1) * transpose(B)
+    GF2 = A + B * inv(D + Gω2) * transpose(B)
+    @test transpose(GF1) ≈ -GF2
+end
+
+for χ in (3, 4), _ in 1:10
+    k = rand(2) .- 0.5
+    @test transpose(cormat_virtual(-k, χ)) ≈ -cormat_virtual(k, χ)
+end

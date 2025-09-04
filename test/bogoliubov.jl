@@ -34,14 +34,20 @@ A, B, H, E, W = generate_bdg(N)
 Emin = (-sum(E) + tr(A)) / 2
 @info "Ground state energy" Emin
 
+# create the (even parity) ground state
+X, Y = bogoliubov_blocks(W)
+gs = paired_state(-inv(X) * Y)
+
 # Hamiltonian operator
 ham = bilinear_Hamiltonian(A, B)
 D, U = eigen(ham)
 # the minimum energy (should be in even parity block)
 @test minimum(block(D, FermionParity(0))) ≈ Emin
+@test ham * gs ≈ Emin * gs
 
 # Hamiltonian map
 v = randn(reduce(⊗, fill(fermion_space(), N)))
 v1 = ham * v
 v2 = bilinear_Hamiltonian_map(A, B, v)
 @test v1 ≈ v2
+@test bilinear_Hamiltonian_map(A, B, gs) ≈ Emin * gs

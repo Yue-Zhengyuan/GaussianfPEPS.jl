@@ -1,5 +1,5 @@
 """
-Momenta in the 1st Brillouin zone (under reciprocal lattice basis)
+Momenta in the D-dimensional 1st Brillouin zone (under reciprocal lattice basis)
 ```
     kᵢ = (mᵢ + δ)/Nᵢ ∈ (−1/2, 1/2] 
 ```

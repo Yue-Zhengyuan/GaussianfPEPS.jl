@@ -103,8 +103,8 @@ function get_peps(ω::AbstractTensor{T, S, N1}, F::AbstractTensor{T, S, N2}) whe
     χ = div(N1, 2)
     Np = N2 - 4χ
     # merge physical and virtual axes
-    fuser_p = isomorphism(fuse(fill(V, Np)...), reduce(⊗, fill(V, Np)))
-    fuser_v = isomorphism(fuse(fill(V, χ)...), reduce(⊗, fill(V, χ)))
+    fuser_p = isomorphism(Int, fuse(fill(V, Np)...), reduce(⊗, fill(V, Np)))
+    fuser_v = isomorphism(Int, fuse(fill(V, χ)...), reduce(⊗, fill(V, χ)))
     ω = (fuser_v ⊗ fuser_v) * ω
     F = (fuser_p ⊗ reduce(⊗, fill(fuser_v, 4))) * F
     @tensor A[-1; -2 -3 -4 -5] := conj(ω[1 -2]) * conj(ω[2 -3]) * F[-1 -5 2 -4 1]
