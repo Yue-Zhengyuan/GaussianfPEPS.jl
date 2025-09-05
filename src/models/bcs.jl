@@ -4,6 +4,7 @@ using Roots
 using TensorKit
 using PEPSKit
 using PEPSKit: nearest_neighbours
+using Statistics: mean
 import TensorKitTensors.HubbardOperators as HO
 using ..GaussianfPEPS
 using ..GaussianfPEPS: _is_xbond
@@ -69,8 +70,11 @@ function energy_exact(
         bz::BrillouinZone;
         t::Float64 = 1.0, Δx::Float64 = 0.5, Δy::Float64 = -0.5, mu::Float64 = 0.0
     )
-    N = prod(size(bz))
-    return sum((cal_xi(k; t, mu) - cal_E(k; t, Δx, Δy, mu)) / N for k in bz.ks)
+    return mean(
+        map(bz.ks) do k
+            cal_xi(k; t, mu) - cal_E(k; t, Δx, Δy, mu)
+        end
+    )
 end
 
 """
@@ -80,13 +84,12 @@ function doping_exact(
         bz::BrillouinZone; t::Float64 = 1.0,
         Δx::Float64 = 0.5, Δy::Float64 = -0.5, mu::Float64 = 0.0
     )
-    N = prod(size(bz))
-    return sum(
+    return mean(
         map(bz.ks) do k
             ξ = cal_xi(k; t, mu)
             Δ = cal_Delta(k; Δx, Δy)
             E = sqrt(ξ^2 + Δ^2)
-            return ξ / E / N
+            return ξ / E
         end
     )
 end
@@ -115,19 +118,18 @@ function energy_peps(
     )
     A, B, D = cormat_blocks(G, Np)
     χ = div(size(G, 1) - 2 * Np, 8)
-    N = prod(size(bz))
-    energy = 0.0
-    for k in bz.ks
-        Gω = cormat_virtual(k, χ)
-        Gf = A + B * inv(D + Gω) * transpose(B)
-        ξ = cal_xi(k; t, mu)
-        Δ = cal_Delta(k; Δx, Δy)
-        energy += ξ * (2 - Gf[1, 2] - Gf[3, 4]) / 2
-        energy += (-1 / 2) * real(
-            Δ * (Gf[4, 1] + Gf[3, 2] + 1.0im * (Gf[4, 2] - Gf[3, 1]))
-        )
-    end
-    return real(energy) / N
+    return mean(
+        map(bz.ks) do k
+            Gω = cormat_virtual(k, χ)
+            Gf = A + B * inv(D + Gω) * transpose(B)
+            ξ = cal_xi(k; t, mu)
+            Δ = cal_Delta(k; Δx, Δy)
+            return real(
+                ξ * (2 - Gf[1, 2] - Gf[3, 4]) / 2 -
+                    Δ * (Gf[4, 1] + Gf[3, 2] + 1.0im * (Gf[4, 2] - Gf[3, 1])) / 2
+            )
+        end
+    )
 end
 
 """
@@ -137,14 +139,13 @@ evaluated from the fiducial state correlation matrix `G`.
 function doping_peps(G::AbstractMatrix, bz::BrillouinZone, Np::Int)
     A, B, D = cormat_blocks(G, Np)
     χ = div(size(G, 1) - 2 * Np, 8)
-    N = prod(size(bz))
-    doping = 0.0
-    for k in bz.ks
-        Gω = cormat_virtual(k, χ)
-        Gf = A + B * inv(D + Gω) * transpose(B)
-        doping += real(Gf[1, 2] + Gf[3, 4]) / (2 * N)
-    end
-    return doping
+    return mean(
+        map(bz.ks) do k
+            Gω = cormat_virtual(k, χ)
+            Gf = A + B * inv(D + Gω) * transpose(B)
+            return real(Gf[1, 2] + Gf[3, 4]) / 2
+        end
+    )
 end
 
 """
@@ -176,14 +177,13 @@ function hopping_peps(G::AbstractMatrix, bz::BrillouinZone, Np::Int, v::Vector{I
     @assert length(v) == 2
     A, B, D = cormat_blocks(G, Np)
     χ = div(size(G, 1) - 2 * Np, 8)
-    N = prod(size(bz))
-    hopping = 0.0
-    for k in bz.ks
-        Gω = cormat_virtual(k, χ)
-        Gf = A + B * inv(D + Gω) * transpose(B)
-        hopping += real(2 - Gf[1, 2] - Gf[3, 4]) * cos(2π * k' * v) / N
-    end
-    return hopping
+    return mean(
+        map(bz.ks) do k
+            Gω = cormat_virtual(k, χ)
+            Gf = A + B * inv(D + Gω) * transpose(B)
+            return real(2 - Gf[1, 2] - Gf[3, 4]) * cos(2π * k' * v)
+        end
+    )
 end
 
 """
@@ -195,15 +195,14 @@ function singlet_peps(G::AbstractMatrix, bz::BrillouinZone, Np::Int, v::Vector{I
     @assert length(v) == 2
     A, B, D = cormat_blocks(G, Np)
     χ = div(size(G, 1) - 2 * Np, 8)
-    N = prod(size(bz))
-    pairing = 0.0
-    for k in bz.ks
-        Gω = cormat_virtual(k, χ)
-        Gf = A + B * inv(D + Gω) * transpose(B)
-        pairing -= sqrt(2) / (4N) * cos(2π * k' * v) *
-            (Gf[1, 4] + Gf[2, 3] + 1.0im * (Gf[1, 3] - Gf[2, 4]))
-    end
-    return pairing
+    return mean(
+        map(bz.ks) do k
+            Gω = cormat_virtual(k, χ)
+            Gf = A + B * inv(D + Gω) * transpose(B)
+            return -sqrt(2) / 4 * cos(2π * k' * v) *
+                (Gf[1, 4] + Gf[2, 3] + 1.0im * (Gf[1, 3] - Gf[2, 4]))
+        end
+    )
 end
 
 end
