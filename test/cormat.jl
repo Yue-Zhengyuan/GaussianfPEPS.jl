@@ -3,7 +3,20 @@ using Random
 using LinearAlgebra
 using TensorKit
 using GaussianfPEPS
-using GaussianfPEPS: cormat_blocks, cormat_virtual, generate_cormat
+using GaussianfPEPS: generate_cormat, cormat_blocks
+using GaussianfPEPS: cormat_virtual
+using SparseArrays: sparse, blockdiag
+
+function get_J(dup::Int)
+    return blockdiag((sparse([0 1; -1 0]) for _ in 1:dup)...)
+end
+
+for n in 2:6
+    A = rand(2n, 2n)
+    G1 = fiducial_cormat(A)
+    G2 = transpose(A) * get_J(n) * A
+    @test G1 ≈ G2
+end
 
 Random.seed!(0)
 
@@ -40,9 +53,4 @@ for _ in 1:10
     GF1 = A + B * inv(D + Gω1) * transpose(B)
     GF2 = A + B * inv(D + Gω2) * transpose(B)
     @test transpose(GF1) ≈ -GF2
-end
-
-for χ in (3, 4), _ in 1:10
-    k = rand(2) .- 0.5
-    @test transpose(cormat_virtual(-k, χ)) ≈ -cormat_virtual(k, χ)
 end

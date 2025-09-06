@@ -1,11 +1,4 @@
 """
-Direct sum of [0 1; -1 0] for `dup` times.
-"""
-function get_J(dup::Int)
-    return blockdiag((iσy for _ in 1:dup)...)
-end
-
-"""
 Direct sum of `[1 im] / 2` for `dup` times
 """
 function get_W(dup::Int)
@@ -20,9 +13,10 @@ The virtual Majorana fermions are ordered as
 (l_1, r_1, ..., l_χ, r_χ, d_1, u_1, ..., d_χ, u_χ)
 """
 function cormat_virtual(k::Vector{Float64}, χ::Int)
-    expx, expy = cispi(2 * k[1]), cispi(2 * k[2])
-    xmat = sparse(1:1:4, 4:-1:1, [-1 / expx, -1 / expx, expx, expx], 4, 4)
-    ymat = sparse(1:1:4, 4:-1:1, [-1 / expy, -1 / expy, expy, expy], 4, 4)
+    expx1, expy1 = cispi(2 * k[1]), cispi(2 * k[2])
+    expx2, expy2 = -1 / expx1, -1 / expy1
+    xmat = sparse(1:1:4, 4:-1:1, [expx2, expx2, expx1, expx1], 4, 4)
+    ymat = sparse(1:1:4, 4:-1:1, [expy2, expy2, expy1, expy1], 4, 4)
     return blockdiag(((n <= χ ? xmat : ymat) for n in 1:2χ)...)
 end
 
@@ -34,8 +28,11 @@ and `J` is the direct sum of `[0 1; -1 0]` blocks.
 It is user's responsibility to ensure the orthogonality of input `X`.
 """
 function fiducial_cormat(X::Matrix{Float64})
-    J = get_J(div(size(X, 1), 2))
-    return transpose(X) * J * X
+    n2, m2 = size(X)
+    @assert n2 == m2 && iseven(n2)
+    U = @view X[1:2:end, :]
+    V = @view X[2:2:end, :]
+    return transpose(U) * V .- transpose(V) * U
 end
 
 """
