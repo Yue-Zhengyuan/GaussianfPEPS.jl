@@ -30,9 +30,10 @@ end
 Construct the fiducial state local correlation matrix
 `Γ = Xᵀ J X`, where `X` is a real orthogonal matrix, 
 and `J` is the direct sum of `[0 1; -1 0]` blocks.
+
+It is user's responsibility to ensure the orthogonality of input `X`.
 """
-function fiducial_cormat(X::AbstractMatrix)
-    @assert eltype(X) <: Real && X' * X ≈ I
+function fiducial_cormat(X::Matrix{Float64})
     J = get_J(div(size(X, 1), 2))
     return transpose(X) * J * X
 end
@@ -43,12 +44,11 @@ Get the blocks of (Np + 4*χ)-dimensional real correlation matrix
     G = [A B; -Bᵀ D]
 ```
 """
-function cormat_blocks(G::AbstractMatrix, Np::Int = 2)
-    @assert eltype(G) <: Real && G ≈ -transpose(G)
-    A = G[1:(2 * Np), 1:(2 * Np)]
-    B = G[1:(2 * Np), (2 * Np + 1):end]
-    D = G[(2 * Np + 1):end, (2 * Np + 1):end]
-    return A, B, D
+function cormat_blocks(G::Matrix{Float64}, Np::Int = 2)
+    @assert G ≈ -transpose(G)
+    return G[1:(2 * Np), 1:(2 * Np)],
+        G[1:(2 * Np), (2 * Np + 1):end],
+        G[(2 * Np + 1):end, (2 * Np + 1):end]
 end
 
 """
@@ -56,8 +56,8 @@ Calculate the 2-body expectation value matrices
 `n_{ij} = ⟨a†_i a_j⟩` and `x_{ij} = ⟨a_i a_j⟩`
 using the real correlation matrix `G`
 """
-function cormat_to_nx(G::AbstractMatrix)
-    @assert eltype(G) <: Real && G ≈ -transpose(G)
+function cormat_to_nx(G::Matrix{Float64})
+    @assert G ≈ -transpose(G)
     dup = div(size(G, 1), 2)
     W = get_W(dup)
     n = I(dup) / 2 - 1.0im * W * G * adjoint(W)
