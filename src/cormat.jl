@@ -17,7 +17,7 @@ function cormat_virtual(k::Vector{Float64}, χ::Int)
     expx2, expy2 = -1 / expx1, -1 / expy1
     xmat = [0 0 0 expx2; 0 0 expx2 0; 0 expx1 0 0; expx1 0 0 0]
     ymat = [0 0 0 expy2; 0 0 expy2 0; 0 expy1 0 0; expy1 0 0 0]
-    return direct_sum(((n <= χ ? xmat : ymat) for n in 1:2χ)...)
+    return direct_sum([(n <= χ ? xmat : ymat) for n in 1:2χ]...)
 end
 
 """
@@ -27,7 +27,8 @@ and `J` is the direct sum of `[0 1; -1 0]` blocks.
 
 It is user's responsibility to ensure the orthogonality of input `X`.
 """
-function fiducial_cormat(X::Matrix{Float64})
+function fiducial_cormat(X::AbstractMatrix)
+    @assert eltype(X) <: Real
     n2, m2 = size(X)
     @assert n2 == m2 && iseven(n2)
     U = @view X[1:2:end, :]
@@ -41,8 +42,8 @@ Get the blocks of (Np + 4*χ)-dimensional real correlation matrix
     G = [A B; -Bᵀ D]
 ```
 """
-function cormat_blocks(G::Matrix{Float64}, Np::Int = 2)
-    @assert G ≈ -transpose(G)
+function cormat_blocks(G::AbstractMatrix, Np::Int = 2)
+    @assert eltype(G) <: Real && G ≈ -transpose(G)
     return G[1:(2 * Np), 1:(2 * Np)],
         G[1:(2 * Np), (2 * Np + 1):end],
         G[(2 * Np + 1):end, (2 * Np + 1):end]
@@ -53,8 +54,8 @@ Calculate the 2-body expectation value matrices
 `n_{ij} = ⟨a†_i a_j⟩` and `x_{ij} = ⟨a_i a_j⟩`
 using the real correlation matrix `G`
 """
-function cormat_to_nx(G::Matrix{Float64})
-    @assert G ≈ -transpose(G)
+function cormat_to_nx(G::AbstractMatrix)
+    @assert eltype(G) <: Real && G ≈ -transpose(G)
     dup = div(size(G, 1), 2)
     W = get_W(dup)
     n = I(dup) / 2 - 1.0im * W * G * adjoint(W)

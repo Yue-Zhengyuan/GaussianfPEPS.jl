@@ -113,7 +113,7 @@ The energy of a Gaussian fPEPS evaluated from
 the fiducial state correlation matrix `G`.
 """
 function energy_peps(
-        G::Matrix{Float64}, bz::BrillouinZone, Np::Int;
+        G::AbstractMatrix, bz::BrillouinZone, Np::Int;
         t::Float64 = 1.0, Δx::Float64 = 0.5, Δy::Float64 = -0.5, mu::Float64 = 0.0
     )
     A, B, D = cormat_blocks(G, Np)
@@ -136,7 +136,7 @@ end
 The average doping `δ = 1 - (1/N) ∑_i ⟨f†_{iσ} f_{iσ}⟩`
 evaluated from the fiducial state correlation matrix `G`.
 """
-function doping_peps(G::Matrix{Float64}, bz::BrillouinZone, Np::Int)
+function doping_peps(G::AbstractMatrix, bz::BrillouinZone, Np::Int)
     A, B, D = cormat_blocks(G, Np)
     χ = div(size(G, 1) - 2 * Np, 8)
     return mean(
@@ -152,7 +152,7 @@ end
 The average magnetization `<Sᵃ> = (1/2N) ∑_i σᵃ_{αβ} ⟨f†_{iα} f_{iβ}⟩`
 evaluated from the fiducial state correlation matrix `G`.
 """
-function mags_peps(G::Matrix{Float64}, bz::BrillouinZone, Np::Int)
+function mags_peps(G::AbstractMatrix, bz::BrillouinZone, Np::Int)
     A, B, D = cormat_blocks(G, Np)
     χ = div(size(G, 1) - 2 * Np, 8)
     N = prod(size(bz))
@@ -173,7 +173,7 @@ evaluated from the fiducial state correlation matrix `G`.
 
 Note: the y-direction of `v` is opposite to the direction of increasing rows.
 """
-function hopping_peps(G::Matrix{Float64}, bz::BrillouinZone, Np::Int, v::Vector{Int})
+function hopping_peps(G::AbstractMatrix, bz::BrillouinZone, Np::Int, v::Vector{Int})
     @assert length(v) == 2
     A, B, D = cormat_blocks(G, Np)
     χ = div(size(G, 1) - 2 * Np, 8)
@@ -191,7 +191,7 @@ The singlet pairing `Δ_{i,i+v} = (1/√2N) ∑_i ϵ_{αβ} ⟨f_{iα} f_{i+v,β
 
 Note: the y-direction of `v` is opposite to the direction of increasing rows.
 """
-function singlet_peps(G::Matrix{Float64}, bz::BrillouinZone, Np::Int, v::Vector{Int})
+function singlet_peps(G::AbstractMatrix, bz::BrillouinZone, Np::Int, v::Vector{Int})
     @assert length(v) == 2
     A, B, D = cormat_blocks(G, Np)
     χ = div(size(G, 1) - 2 * Np, 8)
