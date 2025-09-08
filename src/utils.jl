@@ -42,3 +42,19 @@ function generate_cormat(Np::Int, χ::Int)
     end
     return
 end
+
+# binary “block” operator
+function _block(A, B)
+    return [
+        A zeros(eltype(A), size(A, 1), size(B, 2));
+        zeros(eltype(A), size(B, 1), size(A, 2)) B
+    ]
+end
+
+"""
+Form the block-diagonal (direct sum) of the matrices `ms`:
+"""
+function direct_sum(ms::AbstractMatrix...)
+    @assert length(ms) > 1 "need at least two matrices"
+    return reduce(_block, ms)
+end

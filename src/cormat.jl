@@ -15,9 +15,9 @@ The virtual Majorana fermions are ordered as
 function cormat_virtual(k::Vector{Float64}, χ::Int)
     expx1, expy1 = cispi(2 * k[1]), cispi(2 * k[2])
     expx2, expy2 = -1 / expx1, -1 / expy1
-    xmat = sparse(1:1:4, 4:-1:1, [expx2, expx2, expx1, expx1], 4, 4)
-    ymat = sparse(1:1:4, 4:-1:1, [expy2, expy2, expy1, expy1], 4, 4)
-    return blockdiag(((n <= χ ? xmat : ymat) for n in 1:2χ)...)
+    xmat = [0 0 0 expx2; 0 0 expx2 0; 0 expx1 0 0; expx1 0 0 0]
+    ymat = [0 0 0 expy2; 0 0 expy2 0; 0 expy1 0 0; expy1 0 0 0]
+    return direct_sum(((n <= χ ? xmat : ymat) for n in 1:2χ)...)
 end
 
 """
