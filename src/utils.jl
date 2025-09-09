@@ -43,7 +43,7 @@ function generate_cormat(Np::Int, χ::Int)
     return
 end
 
-# binary “block” operator
+# binary "block" operator
 function _block(A, B)
     return [
         A zeros(eltype(A), size(A, 1), size(B, 2));

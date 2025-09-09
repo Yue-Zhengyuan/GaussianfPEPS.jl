@@ -5,7 +5,8 @@ using TensorKit
 using PEPSKit
 using PEPSKit: nearest_neighbours
 using Statistics: mean
-import TensorKitTensors.HubbardOperators as HO
+import TensorKitTensors.HubbardOperators as hub
+import TensorKitTensors.TJOperators as tJ
 using ..GaussianfPEPS
 using ..GaussianfPEPS: _is_xbond
 using ..GaussianfPEPS: cormat_blocks, cormat_virtual
@@ -26,13 +27,13 @@ function hamiltonian(
         T::Type{<:Number}, lattice::InfiniteSquare; t::Float64 = 1.0,
         Δx::Float64 = 0.5, Δy::Float64 = -0.5, mu::Float64 = 0.0
     )
-    pspace = HO.hubbard_space(Trivial, Trivial)
+    pspace = hub.hubbard_space(Trivial, Trivial)
     pspaces = fill(pspace, (lattice.Nrows, lattice.Ncols))
-    num = HO.e_num(T, Trivial, Trivial)
+    num = hub.e_num(T, Trivial, Trivial)
     unit = TensorKit.id(T, pspace)
-    hopping = (-t) * HO.e_hopping(T, Trivial, Trivial) -
+    hopping = (-t) * hub.e_hopping(T, Trivial, Trivial) -
         (mu / 4) * (num ⊗ unit + unit ⊗ num)
-    pairing = sqrt(2) * HO.singlet_plus(T, Trivial, Trivial)
+    pairing = sqrt(2) * hub.singlet_plus(T, Trivial, Trivial)
     pairing += pairing'
     return LocalOperator(
         pspaces,
@@ -203,6 +204,31 @@ function singlet_peps(G::AbstractMatrix, bz::BrillouinZone, Np::Int, v::Vector{I
                 (Gf[1, 4] + Gf[2, 3] + 1.0im * (Gf[1, 3] - Gf[2, 4]))
         end
     )
+end
+
+"""
+Gutzwiller projector from Hubbard (spin-1/2) 
+to the no-double-occupancy tJ space.
+
+In Gutzwiller approximation, z = 2δ/(1+δ), 
+where δ is doping before projection.
+"""
+function gutzwiller_projector(z::Float64)
+    V_hub = hub.hubbard_space(Trivial, Trivial)
+    V_tJ = tJ.tj_space(Trivial, Trivial)
+    P = zeros(Float64, V_hub → V_tJ)
+    P[(S(0), S(0))][1, 1] = sqrt(z)
+    P[(S(1), S(1))][1, 1] = 1.0
+    P[(S(1), S(1))][2, 2] = 1.0
+    return P
+end
+
+"""
+Apply Gutzwiller projection to Hubbard (spin-1/2) PEPS
+"""
+function gutzwiller_project(z::Float64, peps::InfinitePEPS)
+    P = gutzwiller_projector(z)
+    return InfinitePEPS(collect(P * t for t in peps.A))
 end
 
 end

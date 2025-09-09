@@ -3,7 +3,7 @@ using LinearAlgebra
 using TensorKit
 using PEPSKit
 using GaussianfPEPS
-import TensorKitTensors.HubbardOperators as HO
+import TensorKitTensors.HubbardOperators as hub
 
 Random.seed!(32178046)
 
@@ -27,12 +27,12 @@ function test(χ::Int = 2)
 
     bz = BrillouinZone((128, 128), (false, true))
 
-    O = LocalOperator(lattice, ((1, 1),) => HO.e_num(Trivial, Trivial))
+    O = LocalOperator(lattice, ((1, 1),) => hub.e_num(Trivial, Trivial))
     doping1 = 1 - real(expectation_value(peps, O, env))
     doping2 = BCS.doping_peps(G, bz, Np)
     @info "Doping" doping1 doping2
 
-    mags1 = map([HO.S_x, HO.S_y, HO.S_z]) do func
+    mags1 = map([hub.S_x, hub.S_y, hub.S_z]) do func
         O = LocalOperator(lattice, ((1, 1),) => func(Trivial, Trivial))
         real(expectation_value(peps, O, env))
     end
@@ -40,7 +40,7 @@ function test(χ::Int = 2)
     @info "Magnetization" mags1 mags2
 
     singlets1 = map([(1, 2), (2, 1)]) do site2
-        O = LocalOperator(lattice, ((1, 1), site2) => -HO.singlet_min(Trivial, Trivial))
+        O = LocalOperator(lattice, ((1, 1), site2) => -hub.singlet_min(Trivial, Trivial))
         expectation_value(peps, O, env)
     end
     singlets2 = map([[1, 0], [0, -1]]) do v
@@ -49,7 +49,7 @@ function test(χ::Int = 2)
     @info "NN singlet pairing" singlets1 singlets2
 
     hoppings1 = map([(1, 2), (2, 1)]) do site2
-        O = LocalOperator(lattice, ((1, 1), site2) => HO.e_hopping(Trivial, Trivial))
+        O = LocalOperator(lattice, ((1, 1), site2) => hub.e_hopping(Trivial, Trivial))
         real(expectation_value(peps, O, env))
     end
     hoppings2 = map([[1, 0], [0, -1]]) do v
