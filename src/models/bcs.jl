@@ -217,6 +217,7 @@ function gutzwiller_projector(z::Float64)
     V_hub = hub.hubbard_space(Trivial, Trivial)
     V_tJ = tJ.tj_space(Trivial, Trivial)
     P = zeros(Float64, V_hub → V_tJ)
+    S = FermionParity
     P[(S(0), S(0))][1, 1] = sqrt(z)
     P[(S(1), S(1))][1, 1] = 1.0
     P[(S(1), S(1))][2, 2] = 1.0
